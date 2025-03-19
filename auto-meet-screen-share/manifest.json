@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Auto Meet Screen Share",
+  "version": "1.0",
+  "permissions": ["scripting", "tabs"],
+  "host_permissions": ["*://meet.google.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["*://meet.google.com/*"],
+      "js": ["meetContent.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
