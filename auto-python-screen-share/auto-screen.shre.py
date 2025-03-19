@@ -2,11 +2,14 @@ import time
 import pygetwindow as gw
 import pywinctl
 import pyautogui
+import re
 
 def find_meet_window():
     """Trova una finestra attiva di Google Meet."""
-    for window in gw.getWindowsWithTitle("Meet - izq-dpey-uuo"):  # Il titolo delle call di Meet inizia con "Meet - <nome>"
-        return window
+    pattern = re.compile(r"Meet - (\w{3,4}-){2}\w{3,4}")
+    for window in gw.getWindowsWithTitle("Meet - "):
+        if pattern.match(window.title):
+            return window
     return None
 
 def share_entire_screen():
@@ -32,26 +35,36 @@ def share_entire_screen():
 def monitor_meet():
     """Controlla continuamente se Meet è aperto e attiva la condivisione."""
     print("[INFO] Avvio monitoraggio continuo di Google Meet...")
-
+    
+    last_processed_title = None  # Memorizza l'ultimo titolo di finestra elaborato
+    
     while True:
         meet_window = find_meet_window()
         
         if meet_window:
-            print(f"[INFO] Finestra trovata: {meet_window.title}, attivazione tra 10 secondi...")
-            try:
-                time.sleep(5) # Aspetta 10 secondi prima di attivare la finestra
-                pywinctl.getWindowsWithTitle(meet_window.title)[0].activate()
-                time.sleep(1) # Aspetta per essere sicuri che la finestra sia in primo piano
-                share_entire_screen()
-            except Exception as e:
-                print(f"[ERROR] Impossibile attivare la finestra di Meet: {e}")
+            current_title = meet_window.title
             
-            # Dopo l'attivazione, attendere qualche minuto prima di cercare di nuovo
+            # Controlla se questa finestra è nuova rispetto all'ultima processata
+            if current_title != last_processed_title:
+                print(f"[INFO] Finestra trovata: {current_title}, attivazione tra 5 secondi...")
+                try:
+                    time.sleep(5)  # Aspetta 5 secondi prima di attivare la finestra
+                    pywinctl.getWindowsWithTitle(current_title)[0].activate()
+                    time.sleep(1)  # Aspetta per essere sicuri che la finestra sia in primo piano
+                    share_entire_screen()
+                    last_processed_title = current_title  # Aggiorna l'ultimo titolo processato
+                except Exception as e:
+                    print(f"[ERROR] Impossibile attivare la finestra di Meet: {e}")
+            else:
+                print(f"[INFO] Finestra già processata: {current_title}, attesa di altri 2 minuti...")
+            
+            # Dopo l'attivazione o la verifica, attendere 2 minuti prima di controllare di nuovo
             print("[INFO] Attesa di 2 minuti prima di controllare una nuova call...")
             time.sleep(120)
         else:
-            # Nessuna finestra trovata, riprova tra 10 secondi
+            # Nessuna finestra trovata, riprova tra 1 secondo
             print("[INFO] Nessuna finestra di Meet trovata, riprova tra 1 secondo...")
+            last_processed_title = None  # Resetta se non ci sono finestre
             time.sleep(1)
 
 if __name__ == "__main__":
