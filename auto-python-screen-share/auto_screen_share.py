@@ -47,9 +47,9 @@ def monitor_meet():
             
             # Controlla se questa finestra è nuova rispetto all'ultima processata
             if current_title != last_processed_title:
-                print(f"[INFO] Finestra trovata: {current_title}, attivazione tra 5 secondi...")
+                print(f"[INFO] Finestra trovata: {current_title}, attivazione tra 10 secondi...")
                 try:
-                    time.sleep(5)  # Aspetta 5 secondi prima di attivare la finestra
+                    time.sleep(10)  # Aspetta 10 secondi prima di attivare la finestra
                     pywinctl.getWindowsWithTitle(current_title)[0].activate()
                     time.sleep(1)  # Aspetta per essere sicuri che la finestra sia in primo piano
                     share_entire_screen()

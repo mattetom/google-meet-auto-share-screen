@@ -33,8 +33,7 @@ function autoClickPresentNow() {
 
     let attempts = 0;
     let interval = setInterval(() => {
-        let presentButton = document.querySelector("[aria-label='Present now'], [aria-label='Presenta ora']");
-
+        let presentButton = document.querySelector("[aria-label='Present now'], [aria-label='Presenta ora'], [aria-label='Share screen']");
         if (presentButton) {
             presentButton.click();
             console.log("[SUCCESS] Cliccato su 'Present now'.");
