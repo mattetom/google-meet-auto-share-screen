@@ -1,47 +1,72 @@
 # Auto Meet Screen Share
 
-## English
+## Overview
 
-This Google Chrome extension automates the screen sharing process on Google Meet.
+This project contains:
+- A Chrome extension that automates screen sharing on Google Meet (`auto-meet-screen-share/`).
+- A Windows helper app that can auto-share and auto-update (`auto-python-screen-share/`).
 
-### Installation
+## Chrome extension – Installation
 
 1. Download or clone this repository.
-2. Open Google Chrome and navigate to `chrome://extensions/`.
+2. Open Google Chrome and go to `chrome://extensions/`.
 3. Enable "Developer mode" in the top right corner.
-4. Click on "Load unpacked" and select the `auto-meet-screen-share` folder.
+4. Click "Load unpacked" and select the `auto-meet-screen-share` folder.
 
-### Usage
+## Chrome extension – Usage
 
 1. Open Google Meet and start a meeting.
-2. The extension will automatically detect the meeting and initiate screen sharing.
+2. The extension will detect the meeting and initiate screen sharing.
 
-### Debugging
+## Windows app – Automated Build & Release (recommended)
 
-- Open the Chrome console (F12 or Ctrl+Shift+I) to see logs and any errors.
+A single script builds the EXE, prepares update files, and compiles a versioned installer.
 
-### Creating Executable
+Prerequisites
+- Windows with PowerShell
+- Inno Setup 6 (ISCC on PATH or installed to the default location)
+- Python 3.x and a virtual environment at `.venv` in the repository root
 
-To create a standalone executable:
+Create the venv once (if you don’t have one):
+- PowerShell
+  - python -m venv .venv
+  - .\.venv\Scripts\Activate
 
-1. Install PyInstaller:
-   ```
-   pip install pyinstaller
-   ```
+Run the unified release script from the repo root:
+- PowerShell
+  - .\auto-python-screen-share\build_release.ps1 -Version 1.0.3
+  - Or auto-bump patch: .\auto-python-screen-share\build_release.ps1
 
-2. Create the executable:
-   ```
-   pyinstaller --onefile --noconsole auto_screen_share.py
-   ```
-   This will create a single executable file in the `dist` folder.
+What it does
+- Installs/updates Python deps and PyInstaller in the venv
+- Builds the Windows EXE via PyInstaller: `auto-python-screen-share/dist/auto_screen_share.exe`
+- Prepares update payload in `auto-python-screen-share/updates/`:
+  - `latest_version.txt`
+  - `auto-screen-share_{version}.exe`
+  - `auto-screen-share_{version}.exe.sha256`
+- Compiles an Inno Setup installer with a versioned filename in `auto-python-screen-share/release/`:
+  - `AutoScreenShare_Installer_{version}.exe`
+  - `AutoScreenShare_Installer_{version}.exe.sha256`
+- Prints SHA256 hashes for integrity checks
 
-### Creating Installer
+Hosting updates for auto-update
+- Set `UPDATE_URL` in `auto-python-screen-share/update_checker.py` to your site, e.g.: `https://your-domain/updates/`
+- Upload the contents of `auto-python-screen-share/updates/` to that path
+- Clients will download `latest_version.txt` and the matching EXE
 
-To create an installer using Inno Setup:
+## Optional: Manual build steps (reference)
 
-1. Install Inno Setup from [innosetup.com](https://jrsoftware.org/isinfo.php)
-2. Open your `installer.iss` file with Inno Setup Compiler
-3. Compile the installer by clicking on the "Compile" button or pressing F9
-4. The compiled installer will be created in the output directory specified in your script
+Create EXE manually (not recommended if using the script):
+- pip install pyinstaller
+- pyinstaller --onefile --noconsole auto_screen_share.py
+
+Create installer manually:
+- Install Inno Setup 6
+- Open `auto-python-screen-share/installer.iss` in Inno Setup Compiler and Compile
+
+## Debugging
+
+- For the extension, open Chrome DevTools (F12 or Ctrl+Shift+I) to see logs.
+- For the Windows app, run the built EXE from a console to view output.
 
 

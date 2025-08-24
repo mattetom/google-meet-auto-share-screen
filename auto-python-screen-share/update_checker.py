@@ -4,7 +4,8 @@ import subprocess
 
 UPDATE_URL = "https://tuoserver.com/updates/"
 LOCAL_VERSION_FILE = os.path.join(os.getenv("LOCALAPPDATA"), "AutoScreenShare", "version.txt")
-EXECUTABLE_PATH = os.path.join(os.getenv("LOCALAPPDATA"), "AutoScreenShare", "auto-screen-share.exe")
+# Use underscores to match the installed executable name from the Inno Setup installer
+EXECUTABLE_PATH = os.path.join(os.getenv("LOCALAPPDATA"), "AutoScreenShare", "auto_screen_share.exe")
 
 def get_latest_version():
     """Scarica la versione più recente dal server."""

@@ -1,14 +1,20 @@
+; Preprocessor: version is injected via ISCC with /DMyAppVersion=...
+#ifndef MyAppVersion
+$11.0.3"
+#endif
 [Setup]
 AppName=Auto Screen Share
-AppVersion=1.0
-DefaultDirName={autopf}\AutoScreenShare
+AppVersion={#MyAppVersion}
+DefaultDirName={commonpf}\AutoScreenShare
 DefaultGroupName=Auto Screen Share
 UninstallDisplayIcon={app}\auto_screen_share.exe
 OutputDir=release
-OutputBaseFilename=AutoScreenShare_Installer
+OutputBaseFilename=AutoScreenShare_Installer_{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
 PrivilegesRequired=admin
+ArchitecturesInstallIn64BitMode=x64os
+
 
 [Files]
 Source: "dist\auto_screen_share.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -17,8 +23,8 @@ Source: "dist\auto_screen_share.exe"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{group}\Auto Screen Share"; Filename: "{app}\auto_screen_share.exe"
 
 [Run]
-; Creates a scheduled task to auto-start the script at login with admin rights
-Filename: "schtasks"; Parameters: "/Create /TN AutoScreenShare /TR ""{app}\auto_screen_share.exe"" /SC ONLOGON /RL HIGHEST /F"; Flags: runhidden
+Filename: "schtasks"; Parameters: "/Create /TN AutoScreenShare /TR ""{app}\auto_screen_share.exe"" /SC ONLOGON /RL HIGHEST /F /NP"; Flags: runhidden
+
 
 ; Starts the application immediately after installation
 Filename: "{app}\auto_screen_share.exe"; Description: "Start Auto Screen Share"; Flags: nowait postinstall
