@@ -1,6 +1,8 @@
 import requests
 import os
 import subprocess
+import time
+from logger import get_logger
 
 UPDATE_URL = "http://localhost:3000/api/updates/"
 LOCAL_VERSION_FILE = os.path.join(os.getenv("LOCALAPPDATA"), "AutoScreenShare", "version.txt")
@@ -31,16 +33,45 @@ def ensure_directory_exists(directory_path):
 
 def update_script():
     """Verifica la versione e aggiorna se necessario."""
+    logger = get_logger()
+    start_time = time.time()
+    
     latest_version = get_latest_version()
     if not latest_version:
         print("[ERROR] Impossibile ottenere la versione più recente")
+        logger.log_update_check(
+            check_performed=True,
+            update_available=False,
+            current_version=get_local_version(),
+            latest_version=None,
+            error_message="Failed to get latest version from server"
+        )
         return False
 
     local_version = get_local_version()
+    
+    # Log del controllo aggiornamenti
+    logger.log_update_check(
+        check_performed=True,
+        update_available=(latest_version != local_version),
+        current_version=local_version,
+        latest_version=latest_version
+    )
 
     if latest_version != local_version:
         print(f"[INFO] Nuova versione disponibile: {latest_version}. Aggiornamento in corso...")
         download_url = f"{UPDATE_URL}auto-screen-share/{latest_version}"
+        
+        logger.log_update_check(
+            check_performed=True,
+            update_available=True,
+            current_version=local_version,
+            latest_version=latest_version,
+            download_url=download_url,
+            update_action="download_started"
+        )
+        
+        download_start_time = time.time()
         response = requests.get(download_url, stream=True)
 
         if response.status_code == 200:
@@ -51,10 +82,14 @@ def update_script():
             new_executable = os.path.join(app_data_dir, f"auto-screen-share_{latest_version}.exe")
             
             print(f"[INFO] Scaricando aggiornamento in: {new_executable}")
+            downloaded_size = 0
             with open(new_executable, "wb") as file:
                 for chunk in response.iter_content(1024):
                     file.write(chunk)
+                    downloaded_size += len(chunk)
 
+            download_duration = int((time.time() - download_start_time) * 1000)
+            
             # Assicurati che la directory per il file di versione esista
             ensure_directory_exists(os.path.dirname(LOCAL_VERSION_FILE))
             
@@ -62,16 +97,45 @@ def update_script():
             with open(LOCAL_VERSION_FILE, "w") as file:
                 file.write(latest_version)
 
+            logger.log_update_check(
+                check_performed=True,
+                update_available=True,
+                current_version=local_version,
+                latest_version=latest_version,
+                download_url=download_url,
+                update_action="download_completed",
+                download_size_bytes=downloaded_size,
+                download_duration_ms=download_duration
+            )
+
             print("[SUCCESS] Aggiornamento completato. Riavvio lo script...")
 
             # Sostituisci il file eseguibile attuale con il nuovo
             os.replace(new_executable, EXECUTABLE_PATH)
 
+            logger.log_update_check(
+                check_performed=True,
+                update_available=True,
+                current_version=local_version,
+                latest_version=latest_version,
+                update_action="restart_initiated"
+            )
+
             # Riavvia il nuovo script e chiude il vecchio
             subprocess.Popen([EXECUTABLE_PATH])
             os._exit(0)
         else:
+            error_msg = f"Failed to download new version. Status code: {response.status_code}"
             print(f"[ERROR] Impossibile scaricare la nuova versione. Status code: {response.status_code}")
+            logger.log_update_check(
+                check_performed=True,
+                update_available=True,
+                current_version=local_version,
+                latest_version=latest_version,
+                download_url=download_url,
+                update_action="download_failed",
+                error_message=error_msg
+            )
             return False
 
     return True
