@@ -46,11 +46,16 @@ try {
   if (-not (Test-Path $installer)) { throw "Installer script not found: $installer" }
 
   # Decide version
-  $current = Get-CurrentVersionFromInstaller $installer
+  $previous = '(unknown)'
   if (-not $Version -or [string]::IsNullOrWhiteSpace($Version)) {
+    $current = Get-CurrentVersionFromInstaller $installer
     $Version = Bump-Patch $current
+    $previous = $current
   }
-  Write-Host "Release version: $Version (previous: $current)" -ForegroundColor Cyan
+  else {
+    try { $previous = Get-CurrentVersionFromInstaller $installer } catch { $previous = '(unknown)' }
+  }
+  Write-Host "Release version: $Version (previous: $previous)" -ForegroundColor Cyan
 
   # Ensure tools and deps
   & $venvPython -m pip install --upgrade pip setuptools wheel | Out-Null

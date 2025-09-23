@@ -1,6 +1,6 @@
 ; Preprocessor: version is injected via ISCC with /DMyAppVersion=...
 #ifndef MyAppVersion
-$11.0.3"
+$11.0.5"
 #endif
 [Setup]
 AppName=Auto Screen Share
