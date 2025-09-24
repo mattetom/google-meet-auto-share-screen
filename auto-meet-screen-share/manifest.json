@@ -2,8 +2,19 @@
   "manifest_version": 3,
   "name": "Auto Meet Screen Share",
   "description": "Automatically starts Google Meet and screen sharing without manual intervention.",
-  "version": "1.0",
-  "host_permissions": ["*://meet.google.com/*"],
+  "version": "1.0.5",
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "*://meet.google.com/*",
+    "https://uat.unitretradate.it/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
       "matches": ["*://meet.google.com/*-*"],
