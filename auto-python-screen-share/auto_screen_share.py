@@ -28,14 +28,14 @@ def find_meet_window():
             return window
     
     # Nessuna finestra trovata
-    search_duration = int((time.time() - start_time) * 1000)
-    logger = get_logger()
-    logger.log_window_detection(
-        meet_window_found=False,
-        window_count=len(windows),
-        search_duration_ms=search_duration,
-        action_taken="no_action_needed"
-    )
+    # search_duration = int((time.time() - start_time) * 1000)
+    # logger = get_logger()
+    # logger.log_window_detection(
+    #     meet_window_found=False,
+    #     window_count=len(windows),
+    #     search_duration_ms=search_duration,
+    #     action_taken="no_action_needed"
+    # )
     return None
 
 def share_entire_screen(meet_window_title: str = None):

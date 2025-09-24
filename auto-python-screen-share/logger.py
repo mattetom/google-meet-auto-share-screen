@@ -164,9 +164,9 @@ class AutoScreenShareLogger:
 
 # Configurazione globale del logger
 LOGGING_CONFIG = {
-    'api_url': 'http://localhost:3000',  # Da configurare
+    'api_url': 'https://uat.unitretradate.it',  # Da configurare
     'api_key': 'iuhji876ytghju7678ijhgb',        # Da configurare
-    'version': '1.0.6'                     # Da aggiornare ad ogni release
+    'version': '1.0.11'                     # Da aggiornare ad ogni release
 }
 
 # Istanza globale del logger
@@ -188,4 +188,8 @@ def get_logger() -> AutoScreenShareLogger:
     if logger is None:
         return initialize_logger()
     return logger
+
+
+
+
 
