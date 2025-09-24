@@ -23,8 +23,8 @@ Source: "dist\auto_screen_share.exe"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{group}\Auto Screen Share"; Filename: "{app}\auto_screen_share.exe"
 
 [Run]
-Filename: "schtasks"; Parameters: "/Create /TN AutoScreenShare /TR """"{app}\auto_screen_share.exe"""" /SC ONLOGON /RL HIGHEST /F /NP"; Flags: runhidden runascurrentuser
-Filename: "powershell"; Parameters: "-NoProfile -ExecutionPolicy Bypass -Command ""$app=''{app}''; $task=Get-ScheduledTask -TaskName ''AutoScreenShare''; $task.Settings.DisallowStartIfOnBatteries=$false; $task.Settings.StopIfGoingOnBatteries=$false; $action=New-ScheduledTaskAction -Execute (Join-Path $app ''auto_screen_share.exe'') -WorkingDirectory $app; Set-ScheduledTask -TaskName ''AutoScreenShare'' -Action $action -Settings $task.Settings"""; Flags: runhidden runascurrentuser
+Filename: "{cmd}"; Parameters: "/C powershell -NoProfile -ExecutionPolicy Bypass -Command ""$app=\""{app}\""; echo 'Creating scheduled task...' > \""{app}\schtasks_create.log\""; Register-ScheduledTask -TaskName 'AutoScreenShare' -Action (New-ScheduledTaskAction -Execute (Join-Path $app 'auto_screen_share.exe') -WorkingDirectory $app) -Trigger (New-ScheduledTaskTrigger -AtLogOn) -RunLevel Highest -Force; echo 'SUCCESS: Task created successfully' >> \""{app}\schtasks_create.log\"""" > ""{app}\powershell_task.log"" 2>&1"; Flags: runhidden runascurrentuser waituntilterminated
+Filename: "{cmd}"; Parameters: "/C powershell -NoProfile -ExecutionPolicy Bypass -Command ""$app=\""{app}\""; $task=Get-ScheduledTask -TaskName 'AutoScreenShare'; $task.Settings.DisallowStartIfOnBatteries=$false; $task.Settings.StopIfGoingOnBatteries=$false; $action=New-ScheduledTaskAction -Execute (Join-Path $app 'auto_screen_share.exe') -WorkingDirectory $app; Set-ScheduledTask -TaskName 'AutoScreenShare' -Action $action -Settings $task.Settings"" > ""{app}\powershell_config.log"" 2>&1"; Flags: runhidden runascurrentuser waituntilterminated
 
 ; Starts the application immediately after installation
 Filename: "{app}\auto_screen_share.exe"; Description: "Start Auto Screen Share"; Flags: nowait postinstall
