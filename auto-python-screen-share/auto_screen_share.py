@@ -49,15 +49,15 @@ def share_entire_screen(meet_window_title: str = None):
 
         print("[INFO] Selezione dell'intero schermo...")
         pyautogui.press("tab")  # Passa alla selezione dello schermo
-        time.sleep(0.5)
+        time.sleep(1)
         pyautogui.press("right")  # Preme la freccia a destra per selezionare l'intero schermo
-        time.sleep(0.5)
+        time.sleep(1)
         pyautogui.press("right")  # Preme la freccia a destra per selezionare l'intero schermo
-        time.sleep(0.5)
+        time.sleep(1)
         
         print("[INFO] Conferma della condivisione...")
         pyautogui.press("tab", presses=2)  # Naviga fino al pulsante "Condividi"
-        time.sleep(0.5)
+        time.sleep(1)
         pyautogui.press("enter")  # Conferma
 
         duration_ms = int((time.time() - start_time) * 1000)
@@ -116,11 +116,11 @@ def monitor_meet():
             
             # Controlla se questa finestra è nuova rispetto all'ultima processata
             if current_title != last_processed_title:
-                print(f"[INFO] Finestra trovata: {current_title}, attivazione tra 10 secondi...")
+                print(f"[INFO] Finestra trovata: {current_title}, attivazione tra 20 secondi...")
                 try:
-                    time.sleep(10)  # Aspetta 10 secondi prima di attivare la finestra
+                    time.sleep(20)  # Aspetta 20 secondi prima di attivare la finestra
                     pywinctl.getWindowsWithTitle(current_title)[0].activate()
-                    time.sleep(1)  # Aspetta per essere sicuri che la finestra sia in primo piano
+                    time.sleep(10)  # Aspetta per essere sicuri che la finestra sia in primo piano
                     share_entire_screen(current_title)
                     last_processed_title = current_title  # Aggiorna l'ultimo titolo processato
                 except Exception as e:
