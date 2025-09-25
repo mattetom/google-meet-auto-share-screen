@@ -187,7 +187,7 @@ class AutoScreenShareLogger:
 LOGGING_CONFIG = {
     'api_url': 'https://www.unitretradate.it',  # Da configurare
     'api_key': 'iuhji876ytghju7678ijhgb',        # Da configurare
-    'version': '1.0.22'                     # Da aggiornare ad ogni release
+    'version': '1.0.23'                     # Da aggiornare ad ogni release
 }
 
 # Istanza globale del logger
