@@ -1,6 +1,6 @@
 // Configurazione del logger
 const LOGGING_CONFIG = {
-    apiUrl: 'https://uat.unitretradate.it', // Da configurare
+    apiUrl: 'https://www.unitretradate.it', // Da configurare
     apiKey: 'iuhji876ytghju7678ijhgb',       // Da configurare
     version: '1.0.5'                   // Da aggiornare ad ogni release
 };

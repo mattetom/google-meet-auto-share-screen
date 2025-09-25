@@ -1,5 +1,5 @@
 const LOGGING_CONFIG = {
-    apiUrl: 'https://uat.unitretradate.it',
+    apiUrl: 'https://www.unitretradate.it',
     apiKey: 'iuhji876ytghju7678ijhgb'
 };
 

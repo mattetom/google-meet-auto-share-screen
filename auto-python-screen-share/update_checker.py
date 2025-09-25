@@ -4,7 +4,7 @@ import subprocess
 import time
 from logger import get_logger
 
-UPDATE_URL = "https://uat.unitretradate.it/api/updates/"
+UPDATE_URL = "https://www.unitretradate.it/api/updates/"
 LOCAL_VERSION_FILE = os.path.join(os.getenv("LOCALAPPDATA"), "AutoScreenShare", "version.txt")
 # Use underscores to match the installed executable name from the Inno Setup installer
 EXECUTABLE_PATH = os.path.join(os.getenv("LOCALAPPDATA"), "AutoScreenShare", "auto_screen_share.exe")

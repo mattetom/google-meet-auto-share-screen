@@ -9,7 +9,7 @@
   ],
   "host_permissions": [
     "*://meet.google.com/*",
-    "https://uat.unitretradate.it/*"
+    "https://www.unitretradate.it/*"
   ],
   "background": {
     "service_worker": "background.js",
