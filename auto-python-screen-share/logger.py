@@ -132,7 +132,7 @@ class AutoScreenShareLogger:
     
     def log_error(self, error_type: str, error_message: str, 
                  function_name: str = None, meet_window_title: str = None,
-                 stack_trace: str = None):
+                 window_title: str = None, stack_trace: str = None):
         """Log degli errori dell'applicazione."""
         data = self._get_base_data()
         data['error_type'] = error_type
@@ -140,6 +140,7 @@ class AutoScreenShareLogger:
         data['error_context'] = {
             'function_name': function_name,
             'meet_window_title': meet_window_title,
+            'window_title': window_title,
             'system_info': {
                 'computer_name': self.computer_name,
                 'os_version': self.os_version
@@ -149,6 +150,26 @@ class AutoScreenShareLogger:
         
         print(f"[LOGGER] Sending error log...")
         self._make_request('error', data)
+    
+    def log_window_move_action(self, action_type: str, action_result: str,
+                              window_title: str = None, monitors_detected: int = 0,
+                              new_position_x: int = None, new_position_y: int = None,
+                              duration_ms: int = 0, error_message: str = None):
+        """Log delle azioni di spostamento finestra."""
+        data = self._get_base_data()
+        data['action_type'] = action_type
+        data['action_result'] = action_result
+        data['window_title'] = window_title
+        data['action_details'] = {
+            'monitors_detected': monitors_detected,
+            'new_position_x': new_position_x,
+            'new_position_y': new_position_y,
+            'duration_ms': duration_ms,
+            'error_message': error_message
+        }
+        
+        print(f"[LOGGER] Sending window move action log...")
+        self._make_request('window-move', data)
     
     def log_heartbeat(self, status: str = "monitoring", meet_windows_detected: int = 0,
                      last_action_timestamp: str = None):
@@ -166,7 +187,7 @@ class AutoScreenShareLogger:
 LOGGING_CONFIG = {
     'api_url': 'https://uat.unitretradate.it',  # Da configurare
     'api_key': 'iuhji876ytghju7678ijhgb',        # Da configurare
-    'version': '1.0.13'                     # Da aggiornare ad ogni release
+    'version': '1.0.20'                     # Da aggiornare ad ogni release
 }
 
 # Istanza globale del logger

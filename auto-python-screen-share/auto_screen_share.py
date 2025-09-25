@@ -7,6 +7,321 @@ import traceback
 from datetime import datetime
 import update_checker
 from logger import get_logger, initialize_logger
+import tkinter as tk
+import ctypes
+from ctypes import wintypes
+import win32gui
+import win32con
+import win32api
+import win32process
+
+def get_available_monitors():
+    """Rileva tutti i monitor disponibili usando le API di Windows."""
+    try:
+        # Definisce le strutture necessarie per le API di Windows
+        class RECT(ctypes.Structure):
+            _fields_ = [("left", ctypes.c_long),
+                       ("top", ctypes.c_long),
+                       ("right", ctypes.c_long),
+                       ("bottom", ctypes.c_long)]
+        
+        class MONITORINFO(ctypes.Structure):
+            _fields_ = [("cbSize", ctypes.c_ulong),
+                       ("rcMonitor", RECT),
+                       ("rcWork", RECT),
+                       ("dwFlags", ctypes.c_ulong)]
+        
+        # Carica le API di Windows
+        user32 = ctypes.windll.user32
+        gdi32 = ctypes.windll.gdi32
+        
+        monitors = []
+        
+        def enum_monitor_callback(hmonitor, hdc, lprect, lparam):
+            """Callback per EnumDisplayMonitors."""
+            monitor_info = MONITORINFO()
+            monitor_info.cbSize = ctypes.sizeof(MONITORINFO)
+            
+            if user32.GetMonitorInfoW(hmonitor, ctypes.byref(monitor_info)):
+                monitor_data = {
+                    'id': len(monitors),
+                    'x': monitor_info.rcMonitor.left,
+                    'y': monitor_info.rcMonitor.top,
+                    'width': monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
+                    'height': monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
+                    'is_primary': bool(monitor_info.dwFlags & 1)  # MONITORINFOF_PRIMARY
+                }
+                monitors.append(monitor_data)
+            return True
+        
+        # Definisce il tipo di callback
+        MonitorEnumProc = ctypes.WINFUNCTYPE(ctypes.c_bool, 
+                                           wintypes.HMONITOR, 
+                                           wintypes.HDC, 
+                                           ctypes.POINTER(RECT), 
+                                           wintypes.LPARAM)
+        
+        # Enumera tutti i monitor
+        callback = MonitorEnumProc(enum_monitor_callback)
+        user32.EnumDisplayMonitors(None, None, callback, 0)
+        
+        # Se non riusciamo a rilevare monitor con le API di Windows, fallback a tkinter
+        if not monitors:
+            logger = get_logger()
+            logger.log_error(
+                error_type="monitor_detection_fallback",
+                error_message="API Windows non disponibili, uso fallback tkinter",
+                function_name="get_available_monitors"
+            )
+            
+            # Fallback usando tkinter
+            root = tk.Tk()
+            root.withdraw()
+            
+            screen_width = root.winfo_screenwidth()
+            screen_height = root.winfo_screenheight()
+            
+            monitors.append({
+                'id': 0,
+                'x': 0,
+                'y': 0,
+                'width': screen_width,
+                'height': screen_height,
+                'is_primary': True
+            })
+            
+            root.destroy()
+        
+        # Log del risultato
+        logger = get_logger()
+        logger.log_window_move_action(
+            action_type="monitor_detection",
+            action_result="success",
+            monitors_detected=len(monitors),
+            duration_ms=0
+        )
+        
+        return monitors
+        
+    except Exception as e:
+        logger = get_logger()
+        logger.log_error(
+            error_type="monitor_detection_failed",
+            error_message=str(e),
+            function_name="get_available_monitors",
+            stack_trace=traceback.format_exc()
+        )
+        
+        # Fallback finale: restituisce solo il monitor principale con valori di default
+        return [{
+            'id': 0,
+            'x': 0,
+            'y': 0,
+            'width': 1920,  # Valore di default
+            'height': 1080,  # Valore di default
+            'is_primary': True
+        }]
+
+
+
+
+def get_available_monitors():
+    """Rileva tutti i monitor disponibili usando pywin32."""
+    try:
+        monitors = []
+        
+        # Monitor principale
+        primary_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
+        primary_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+        
+        monitors.append({
+            'id': 0,
+            'x': 0,
+            'y': 0,
+            'width': primary_width,
+            'height': primary_height,
+            'is_primary': True
+        })
+        
+        # Prova a rilevare monitor aggiuntivi
+        virtual_width = win32api.GetSystemMetrics(win32con.SM_CXVIRTUALSCREEN)
+        virtual_height = win32api.GetSystemMetrics(win32con.SM_CYVIRTUALSCREEN)
+        virtual_x = win32api.GetSystemMetrics(win32con.SM_XVIRTUALSCREEN)
+        virtual_y = win32api.GetSystemMetrics(win32con.SM_YVIRTUALSCREEN)
+        
+        # Se il virtual screen è più grande del monitor principale, probabilmente c'è un secondo monitor
+        if virtual_width > primary_width or virtual_height > primary_height:
+            second_monitor = {
+                'id': 1,
+                'x': primary_width,  # Il secondo monitor è tipicamente a destra
+                'y': 0,
+                'width': virtual_width - primary_width,
+                'height': virtual_height,
+                'is_primary': False
+            }
+            monitors.append(second_monitor)
+        
+        # Log del risultato
+        logger = get_logger()
+        logger.log_window_move_action(
+            action_type="monitor_detection",
+            action_result="success",
+            monitors_detected=len(monitors),
+            duration_ms=0
+        )
+        
+        return monitors
+        
+    except Exception as e:
+        logger = get_logger()
+        logger.log_error(
+            error_type="monitor_detection_failed",
+            error_message=str(e),
+            function_name="get_available_monitors",
+            stack_trace=traceback.format_exc()
+        )
+        
+        # Fallback: restituisce solo il monitor principale con valori di default
+        return [{
+            'id': 0,
+            'x': 0,
+            'y': 0,
+            'width': 1920,  # Valore di default
+            'height': 1080,  # Valore di default
+            'is_primary': True
+        }]
+
+def move_window_to_second_monitor(window_title: str):
+    """Sposta la finestra usando pywin32 con API specifiche di Windows."""
+    start_time = time.time()
+    logger = get_logger()
+    
+    try:
+        # Ottieni i monitor disponibili usando pywin32
+        monitors = get_available_monitors()
+        
+        if len(monitors) < 2:
+            logger.log_window_move_action(
+                action_type="move_to_second_monitor",
+                action_result="no_second_monitor",
+                window_title=window_title,
+                monitors_detected=len(monitors),
+                duration_ms=int((time.time() - start_time) * 1000)
+            )
+            print("[INFO] Nessun secondo monitor rilevato, la finestra rimane nel monitor principale")
+            return False
+        
+        # Trova la finestra usando win32gui
+        def enum_windows_callback(hwnd, windows):
+            if win32gui.IsWindowVisible(hwnd):
+                window_text = win32gui.GetWindowText(hwnd)
+                if window_title in window_text:
+                    windows.append((hwnd, window_text))
+            return True
+        
+        windows = []
+        win32gui.EnumWindows(enum_windows_callback, windows)
+        
+        if not windows:
+            logger.log_window_move_action(
+                action_type="move_to_second_monitor",
+                action_result="window_not_found",
+                window_title=window_title,
+                monitors_detected=len(monitors),
+                duration_ms=int((time.time() - start_time) * 1000)
+            )
+            print(f"[WARNING] Finestra '{window_title}' non trovata per lo spostamento")
+            return False
+        
+        hwnd = windows[0][0]  # Handle della finestra
+        second_monitor = monitors[1]  # Il secondo monitor
+        
+        print(f"[INFO] Spostamento con pywin32: finestra {hwnd}")
+        
+        # Ottieni le dimensioni attuali della finestra
+        rect = win32gui.GetWindowRect(hwnd)
+        window_width = rect[2] - rect[0]
+        window_height = rect[3] - rect[1]
+        
+        
+        # Calcola la posizione nel secondo monitor
+        target_x = second_monitor['x'] + 50  # 50px dal bordo sinistro
+        target_y = second_monitor['y'] + 50  # 50px dal bordo superiore
+        
+        # Usa SetWindowPos per spostare la finestra
+        # SWP_NOZORDER mantiene l'ordine Z, SWP_SHOWWINDOW mostra la finestra
+        result = win32gui.SetWindowPos(
+            hwnd,
+            win32con.HWND_TOP,
+            target_x,
+            target_y,
+            window_width,
+            window_height,
+            win32con.SWP_NOZORDER | win32con.SWP_SHOWWINDOW
+        )
+        
+        # Verifica se la finestra si è effettivamente spostata controllando la posizione
+        time.sleep(0.5)  # Aspetta che lo spostamento sia completato
+        new_rect = win32gui.GetWindowRect(hwnd)
+        new_x = new_rect[0]
+        new_y = new_rect[1]
+        
+        # Considera lo spostamento riuscito se la finestra si è spostata nel secondo monitor
+        # (con una tolleranza di 200 pixel per X e 100 pixel per Y)
+        moved = (new_x >= second_monitor['x'] - 200 and 
+                new_x <= second_monitor['x'] + second_monitor['width'] + 200 and
+                abs(new_y - target_y) < 100)
+        
+        if moved:
+            result = True
+        else:
+            result = False
+        
+        if result:
+            # Attiva la finestra
+            win32gui.SetForegroundWindow(hwnd)
+            time.sleep(0.5)
+            
+            # Forza il refresh della finestra
+            win32gui.InvalidateRect(hwnd, None, True)
+            win32gui.UpdateWindow(hwnd)
+            time.sleep(0.5)
+            
+            duration_ms = int((time.time() - start_time) * 1000)
+            logger.log_window_move_action(
+                action_type="move_to_second_monitor",
+                action_result="success",
+                window_title=window_title,
+                monitors_detected=len(monitors),
+                new_position_x=target_x,
+                new_position_y=target_y,
+                duration_ms=duration_ms
+            )
+            
+            print(f"[SUCCESS] Finestra spostata con pywin32 alla posizione ({target_x}, {target_y})")
+            return True
+        else:
+            raise Exception("SetWindowPos fallito")
+        
+    except Exception as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        logger.log_window_move_action(
+            action_type="move_to_second_monitor",
+            action_result="failed",
+            window_title=window_title,
+            monitors_detected=len(monitors) if 'monitors' in locals() else 0,
+            duration_ms=duration_ms,
+            error_message=str(e)
+        )
+        logger.log_error(
+            error_type="window_move_failed",
+            error_message=str(e),
+            function_name="move_window_to_second_monitor",
+            window_title=window_title,
+            stack_trace=traceback.format_exc()
+        )
+        print(f"[ERROR] Errore durante lo spostamento con pywin32: {e}")
+        return False
 
 def find_meet_window():
     """Trova una finestra attiva di Google Meet."""
@@ -121,6 +436,17 @@ def monitor_meet():
                     time.sleep(20)  # Aspetta 20 secondi prima di attivare la finestra
                     pywinctl.getWindowsWithTitle(current_title)[0].activate()
                     time.sleep(10)  # Aspetta per essere sicuri che la finestra sia in primo piano
+                    
+                    # Sposta la finestra nel secondo monitor prima di condividere lo schermo
+                    print("[INFO] Tentativo di spostamento della finestra nel secondo monitor...")
+                    move_success = move_window_to_second_monitor(current_title)
+                    
+                    if move_success:
+                        time.sleep(3)  # Aspetta un momento dopo lo spostamento
+                        print("[INFO] Finestra spostata con successo, procedo con la condivisione...")
+                    else:
+                        print("[INFO] Spostamento non riuscito o non necessario, procedo con la condivisione...")
+                    
                     share_entire_screen(current_title)
                     last_processed_title = current_title  # Aggiorna l'ultimo titolo processato
                 except Exception as e:
